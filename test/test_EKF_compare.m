@@ -13,7 +13,7 @@ addpath(genpath('Filters'));
 %% 2. 加载数据
 data_path = fullfile('DataGenerator', 'measurement_data_2.mat');
 if ~exist(data_path, 'file')
-    error('未找到数据文件，请先运行 DataGenerator/generate_data.m');
+    error('未找到数据文，请先运行 DataGenerator/generate_data.m');
 end
 load(data_path); % 载入 trajectories, anchors, IMU_noise_params, UWB_noise_params
 
