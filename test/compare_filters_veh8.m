@@ -18,13 +18,13 @@ if ~exist(data_path, 'file')
 end
 load(data_path); 
 
-save_result_dir = 'E:\SE2-MLKF-Project\Result\Veh8';
+save_result_dir = 'E:\SE2_DMLKF_Project\Result\Veh8';
 if ~exist(save_result_dir, 'dir')
     mkdir(save_result_dir);
 end
 result_full_path = fullfile(save_result_dir, 'Filter_Results_Veh8.mat');
 
-if_read_result = 0; % 1 读取已有结果作图，0 重新生成新的结果保存
+if_read_result = 1; % 1 读取已有结果作图，0 重新生成新的结果保存
 
 if if_read_result
     % 功能 1：检查并读取数据
