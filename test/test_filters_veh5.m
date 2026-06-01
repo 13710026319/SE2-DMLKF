@@ -132,6 +132,9 @@ if ~if_read_result
         
         % --- [步骤 B] UWB 更新 ---
         if uwb_idx <= length(t_uwb) && abs(curr_t - t_uwb(uwb_idx)) < 1e-4
+
+            is_integer_second = mod(uwb_idx-1,10)==0; % 判断是否为整数秒
+
             % 1. EKF 逻辑：提取预测位置并更新
             ekf_pred_pos = zeros(num_vehicles, 2);
             pf_pred_pos = zeros(num_vehicles, 2);

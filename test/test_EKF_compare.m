@@ -20,7 +20,7 @@ load(data_path); % 载入 trajectories, anchors, IMU_noise_params, UWB_noise_par
 %% 3. 实例化两组滤波器
 num_vehicles = 5;
 num_anchor = 2;
-filters_AnchorOnly = cell(1, num_vehicles); % 
+filters_AnchorOnly = cell(1, num_vehicles); % 仅基站更新
 filters_General    = cell(1, num_vehicles); % 基站+相对测距组
 
 v_names = {'V1', 'V2', 'V3', 'V4', 'V5'};

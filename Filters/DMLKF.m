@@ -3,7 +3,7 @@ classdef DMLKF < EKF_filter
     % 已完美升级至 SE_2(2) 流形 (4x4 变换矩阵)
     methods
         function obj = DMLKF(Init_state)
-            % 构造函数: 锁死标志位为 'anchor_only'，阻止基类自行处理相对测距
+            % 
             if nargin < 1
                 Init_state =[];
             end
