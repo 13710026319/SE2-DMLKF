@@ -36,7 +36,7 @@ if if_read_result
         res_EKF   = filter_results_Veh8.res_EKF;
         res_PF    = filter_results_Veh8.res_PF;
         res_UKF   = filter_results_Veh8.res_UKF;
-        res_IEKF  = filter_results_Veh8.res_IEKF;  % 【读取补全】
+        res_IEKF  = filter_results_Veh8.res_IEKF; 
         res_DMLKF = filter_results_Veh8.res_DMLKF;
         
         % 获取车辆数量，用于后续循环
@@ -60,7 +60,7 @@ if ~if_read_result
     ekf_filters = cell(1, num_vehicles);
     pf_filters = cell(1, num_vehicles);
     ukf_filters = cell(1, num_vehicles);
-    iekf_filters = cell(1, num_vehicles); % 【初始化补全】
+    iekf_filters = cell(1, num_vehicles); 
     dmlkf_filters = cell(1, num_vehicles);
     
     for i = 1:num_vehicles
@@ -89,7 +89,7 @@ if ~if_read_result
         ekf_filters{i} = EKF_filter(init_state, 'general', 0);
         pf_filters{i} = PF_filter(init_state, 'general', 1, 500);
         ukf_filters{i} = UKF_filter(init_state, 'general', 0);
-        iekf_filters{i} = IEKF_filter(init_state, 'general', 0); % 【实例化补全】
+        iekf_filters{i} = IEKF_filter(init_state, 'general', 0);
         dmlkf_filters{i} = DMLKF(init_state);
     end
     
@@ -103,7 +103,7 @@ if ~if_read_result
     history_EKF = zeros(N_steps, 8, num_vehicles);
     history_PF = zeros(N_steps, 8, num_vehicles);
     history_UKF = zeros(N_steps, 8, num_vehicles);
-    history_IEKF = zeros(N_steps, 8, num_vehicles); % 【历史预分配补全】
+    history_IEKF = zeros(N_steps, 8, num_vehicles);
     history_DMLKF = zeros(N_steps, 8, num_vehicles);
     
     fprintf('开始对比仿真：EKF vs IEKF vs DMLKF (8 Vehicles)...\n');
@@ -121,7 +121,7 @@ if ~if_read_result
             ekf_filters{i}.predict(am, wm, dt);
             pf_filters{i}.predict(am, wm, dt);
             ukf_filters{i}.predict(am, wm, dt);
-            iekf_filters{i}.predict(am, wm, dt); % 【预测逻辑补全】
+            iekf_filters{i}.predict(am, wm, dt);
             dmlkf_filters{i}.predict(am, wm, dt);
         end
         
@@ -131,12 +131,12 @@ if ~if_read_result
             ekf_pred_pos = zeros(num_vehicles, 2);
             pf_pred_pos = zeros(num_vehicles, 2);
             ukf_pred_pos = zeros(num_vehicles, 2);
-            iekf_pred_pos = zeros(num_vehicles, 2); % 【预测状态提取补全】
+            iekf_pred_pos = zeros(num_vehicles, 2);
             for i = 1:num_vehicles
                 ekf_pred_pos(i, :) = ekf_filters{i}.state.T(1:2, 4)';
                 pf_pred_pos(i, :) = pf_filters{i}.state.T(1:2, 4)';
                 ukf_pred_pos(i, :) = ukf_filters{i}.state.T(1:2, 4)';
-                iekf_pred_pos(i, :) = iekf_filters{i}.state.T(1:2, 4)'; % 【预测状态提取补全】
+                iekf_pred_pos(i, :) = iekf_filters{i}.state.T(1:2, 4)';
             end
             
             % 2. DMLKF 逻辑：准备广播消息
@@ -149,7 +149,7 @@ if ~if_read_result
             for i = 1:num_vehicles
                 veh = trajectories.(v_names{i});
                 anc_meas = veh.UWB_Anchor(uwb_idx, 2:(1+num_anchor))'; 
-                % 💡核心修正：切片范围从固定 2:6 动态扩展为 2:(1+num_vehicles)，完美兼容8车相对测距
+                
                 rel_meas = veh.UWB_Relative(uwb_idx, 2:(1+num_vehicles))'; 
                 
                 % EKF 更新
@@ -164,7 +164,7 @@ if ~if_read_result
                 ukf_filters{i}.update_anchor(anc_meas, anchors);
                 ukf_filters{i}.update_general(rel_meas, ukf_pred_pos);
                 
-                % IEKF 更新 【更新逻辑补全】
+                % IEKF 更新 
                 iekf_filters{i}.update_anchor(anc_meas, anchors);
                 iekf_filters{i}.update_general(rel_meas, iekf_pred_pos);
     
@@ -191,7 +191,7 @@ if ~if_read_result
             history_UKF(k, :, i) = [T_ukf(1:2, 4)', atan2(T_ukf(2,1), T_ukf(1,1)), ...
                                     T_ukf(1:2, 3)', ukf_filters{i}.state.ba', ukf_filters{i}.state.bw];
                                 
-            % 记录 IEKF 【历史记录补全】
+            % 记录 IEKF 
             T_iekf = iekf_filters{i}.state.T;
             history_IEKF(k, :, i) = [T_iekf(1:2, 4)', atan2(T_iekf(2,1), T_iekf(1,1)), ...
                                     T_iekf(1:2, 3)', iekf_filters{i}.state.ba', iekf_filters{i}.state.bw];
@@ -207,14 +207,14 @@ if ~if_read_result
     res_EKF = cell(1, num_vehicles);
     res_PF = cell(1, num_vehicles);
     res_UKF = cell(1, num_vehicles);
-    res_IEKF = cell(1, num_vehicles); % 【结果计算分配补全】
+    res_IEKF = cell(1, num_vehicles); 
     res_DMLKF = cell(1, num_vehicles);
     
     for i = 1:num_vehicles
         res_EKF{i} = process_filter_result(trajectories.(v_names{i}), history_EKF(:,:,i));
         res_PF{i} = process_filter_result(trajectories.(v_names{i}), history_PF(:,:,i));
         res_UKF{i} = process_filter_result(trajectories.(v_names{i}), history_UKF(:,:,i));
-        res_IEKF{i} = process_filter_result(trajectories.(v_names{i}), history_IEKF(:,:,i)); % 【结果计算补全】
+        res_IEKF{i} = process_filter_result(trajectories.(v_names{i}), history_IEKF(:,:,i)); 
         res_DMLKF{i} = process_filter_result(trajectories.(v_names{i}), history_DMLKF(:,:,i));
     end
     fprintf('\n正在保存数据至 %s ...\n', result_full_path);
@@ -223,7 +223,7 @@ if ~if_read_result
     filter_results_Veh8.res_EKF   = res_EKF;
     filter_results_Veh8.res_PF    = res_PF;
     filter_results_Veh8.res_UKF   = res_UKF;
-    filter_results_Veh8.res_IEKF  = res_IEKF;  % 【保存打包补全】
+    filter_results_Veh8.res_IEKF  = res_IEKF;  
     filter_results_Veh8.res_DMLKF = res_DMLKF;
     
     % 执行保存
@@ -239,7 +239,7 @@ for i = 1:num_vehicles
     rmse_ekf = sqrt(mean(res_EKF{i}.errors.err_Horizontal.^2));
     rmse_pf = sqrt(mean(res_PF{i}.errors.err_Horizontal.^2));
     rmse_ukf = sqrt(mean(res_UKF{i}.errors.err_Horizontal.^2));
-    rmse_iekf = sqrt(mean(res_IEKF{i}.errors.err_Horizontal.^2)); % 【RMSE计算补全】
+    rmse_iekf = sqrt(mean(res_IEKF{i}.errors.err_Horizontal.^2)); 
     rmse_dmlkf = sqrt(mean(res_DMLKF{i}.errors.err_Horizontal.^2));
     
     fprintf('%-10s | %-15.4f | %-15.4f |%-15.4f |%-15.4f |%-15.4f\n', v_names{i}, rmse_ekf, rmse_pf, rmse_ukf, rmse_iekf, rmse_dmlkf);
@@ -256,7 +256,7 @@ for i = 1:num_vehicles
     plot(t_arr, res_EKF{i}.errors.err_Horizontal, 'r--', 'LineWidth', 1.0, 'DisplayName', 'EKF (General)');
     plot(t_arr, res_PF{i}.errors.err_Horizontal, 'g--', 'LineWidth', 1.0, 'DisplayName', 'PF (General)');
     plot(t_arr, res_UKF{i}.errors.err_Horizontal, 'y--', 'LineWidth', 1.0, 'DisplayName', 'UKF (General)');
-    plot(t_arr, res_IEKF{i}.errors.err_Horizontal, 'c--', 'LineWidth', 1.0, 'DisplayName', 'IEKF (General)'); % 【绘图补全】
+    plot(t_arr, res_IEKF{i}.errors.err_Horizontal, 'c--', 'LineWidth', 1.0, 'DisplayName', 'IEKF (General)'); 
     plot(t_arr, res_DMLKF{i}.errors.err_Horizontal, 'b-', 'LineWidth', 1.2, 'DisplayName', 'SE(2)-DMLKF');
     hold off;
     
@@ -264,10 +264,10 @@ for i = 1:num_vehicles
     ylabel('Error (m)');
     title(['Vehicle ', num2str(i), ' (', v_names{i}, ')']);
     
-    % 自适应纵坐标范围 (把 IEKF 加进去计算最大误差)
+    % 自适应纵坐标范围 
     max_err = max([...
         max(res_EKF{i}.errors.err_Horizontal),...
-        max(res_IEKF{i}.errors.err_Horizontal),... % 【最大误差计算补全】
+        max(res_IEKF{i}.errors.err_Horizontal),... 
         max(res_PF{i}.errors.err_Horizontal),...
         max(res_UKF{i}.errors.err_Horizontal),...
         max(res_DMLKF{i}.errors.err_Horizontal)]);

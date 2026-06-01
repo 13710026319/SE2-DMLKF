@@ -17,7 +17,7 @@ anchors =[30, 0;          % 基站1位置
           0,50];          % 基站2位置
 
 % 设置目标文件夹路径
-save_dir = 'E:\SE2-MLKF-Project\DataGenerator';
+save_dir = 'E:\SE2_DMLKF_Project\DataGenerator';
 trajectories_mat_name = 'Trj_data_Veh8_Anc2.mat';
 
 % 创建总体结构体
