@@ -276,19 +276,19 @@ hold off;
 
 
 % % 如果文件夹不存在，则自动创建
-% if ~exist(save_dir, 'dir')
-%     mkdir(save_dir);
-% end
-% 
-% % 拼接完整的文件保存路径
-% save_path = fullfile(save_dir, trajectories_mat_name);
-% 
-% % 保存关键变量 (将 轨迹数据、基站位置及 噪声参数 打包保存)
-% save(save_path, 'trajectories', 'anchors', 'IMU_noise_params', 'UWB_noise_params');
-% 
-% fprintf('\n==== 数据生成完成 ====\n');
-% fprintf('UWB 数据已按 10Hz 生成，基站/相对测距维度配置正确。\n');
-% fprintf('所有数据已成功保存至: %s\n', save_path);
+if ~exist(save_dir, 'dir')
+    mkdir(save_dir);
+end
+
+% 拼接完整的文件保存路径
+save_path = fullfile(save_dir, trajectories_mat_name);
+
+% 保存关键变量 (将 轨迹数据、基站位置及 噪声参数 打包保存)
+save(save_path, 'trajectories', 'anchors', 'IMU_noise_params', 'UWB_noise_params');
+
+fprintf('\n==== 数据生成完成 ====\n');
+fprintf('UWB 数据已按 10Hz 生成，基站/相对测距维度配置正确。\n');
+fprintf('所有数据已成功保存至: %s\n', save_path);
 
 
 %% =========================================================================

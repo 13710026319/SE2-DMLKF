@@ -12,7 +12,7 @@ clc; clear; close all;
 addpath(genpath('Common'));
 addpath(genpath('Filters'));
 
-trajectories_mat_name = 'Trj_data_Veh5_Anc2.mat';
+trajectories_mat_name = 'Trj_data_Veh5_Anc2_new.mat';
 
 data_path = fullfile('DataGenerator', trajectories_mat_name);
 if ~exist(data_path, 'file')
@@ -25,9 +25,9 @@ if ~exist(save_result_dir, 'dir')
     mkdir(save_result_dir);
 end
 
-result_full_path = fullfile(save_result_dir, 'Filter_Results_Veh5_a.mat');
+result_full_path = fullfile(save_result_dir, 'Filter_Results_Veh5_1s_rel.mat');% 1s相对测距结果
 
-if_read_result = 0; % 1 读取已有结果作图，0 重新生成新的结果保存，注意修改变量名
+if_read_result = 1; % 1 读取已有结果作图，0 重新生成新的结果保存，注意修改变量名
 
 if if_read_result
     % 功能 1：检查并读取数据
@@ -162,22 +162,30 @@ if ~if_read_result
                 
                 % EKF 更新
                 ekf_filters{i}.update_anchor(anc_meas, anchors);
-                ekf_filters{i}.update_general(rel_meas, ekf_pred_pos);
+                
                 
                 % PF 更新
                 pf_filters{i}.update_anchor(anc_meas, anchors);
-                pf_filters{i}.update_general(rel_meas, pf_pred_pos);
+                
     
                 % UKF 更新
                 ukf_filters{i}.update_anchor(anc_meas, anchors);
-                ukf_filters{i}.update_general(rel_meas, ukf_pred_pos);
+                
     
                 % DMLKF 更新
                 dmlkf_filters{i}.update_DMLKF(anc_meas, anchors, rel_meas, dmlkf_msgs);
 
                 % IEKF 更新
                 iekf_filters{i}.update_anchor(anc_meas, anchors);
-                iekf_filters{i}.update_general(rel_meas, iekf_pred_pos);
+                
+
+                if is_integer_second
+                    ekf_filters{i}.update_general(rel_meas, ekf_pred_pos);
+                    pf_filters{i}.update_general(rel_meas, pf_pred_pos);
+                    ukf_filters{i}.update_general(rel_meas, ukf_pred_pos);
+                    dmlkf_filters{i}.update_DMLKF(anc_meas, anchors, rel_meas, dmlkf_msgs, 1);
+                    iekf_filters{i}.update_general(rel_meas, iekf_pred_pos);
+                end
     
             end
             uwb_idx = uwb_idx + 1;
@@ -230,17 +238,17 @@ if ~if_read_result
 
     % fprintf('\n正在保存数据至 %s ...\n', result_full_path);
     % 
-    % % 将 8 辆车的分离数据打包成易于后续调用的整体 cell 结构
-    % filter_results_Veh5.res_EKF   = res_EKF;
-    % filter_results_Veh5.res_PF    = res_PF;
-    % filter_results_Veh5.res_UKF   = res_UKF;
-    % filter_results_Veh5.res_DMLKF = res_DMLKF;
-    % filter_results_Veh5.res_IEKF   = res_IEKF;
-    % 
-    % % 执行保存命令
-    % save(result_full_path, 'filter_results_Veh5');
-    % 
-    % fprintf('==== 结果保存完成！====\n');
+    % 将 8 辆车的分离数据打包成易于后续调用的整体 cell 结构
+    filter_results_Veh5.res_EKF   = res_EKF;
+    filter_results_Veh5.res_PF    = res_PF;
+    filter_results_Veh5.res_UKF   = res_UKF;
+    filter_results_Veh5.res_DMLKF = res_DMLKF;
+    filter_results_Veh5.res_IEKF   = res_IEKF;
+
+    % 执行保存命令
+    save(result_full_path, 'filter_results_Veh5');
+
+    fprintf('==== 结果保存完成！====\n');
 
 end
 

@@ -29,8 +29,10 @@ classdef DMLKF < EKF_filter
         end
         
 
-        function update_DMLKF(obj, anc_meas, anc_pos, rel_meas, neighbors_msgs)
-            % obj必须只经过了IMU预测而未使用基站更新
+        function update_DMLKF(obj, anc_meas, anc_pos, rel_meas, neighbors_msgs, is_integer_second)
+            if nargin < 6
+                is_integer_second = 0;
+            end
             
             % 预备: 保存先验状态 (k|k-1) 与 提取 S_p 算子
             state_prior = obj.state;
@@ -84,6 +86,15 @@ classdef DMLKF < EKF_filter
             
             state_anc = boxplus_Ms(state_prior, delta_x_anc);
             p_anc = state_anc.T(1 : 2, 4); % 【修改点】：位置位于第 4 列
+
+            % 仅整数秒执行相对测距更新
+            if ~is_integer_second
+            
+                obj.P = P_anc;
+                obj.state = state_anc;
+                return;
+            
+            end
             
             % =============================================================
             % Step 3: Relative-Range Processing via MLKF (论文 5.3)
@@ -96,6 +107,7 @@ classdef DMLKF < EKF_filter
             num_neighbors = length(rel_meas);
             sigma_m2 = obj.noise_params.sigma_rel ^ 2;
             valid_rel_count = 0; % 统计有效的邻居数量
+            
             
             for m = 1 : num_neighbors
                 if isnan(rel_meas(m)) || isempty(neighbors_msgs{m})
@@ -146,6 +158,7 @@ classdef DMLKF < EKF_filter
                 x_ML_list{valid_rel_count} = x_ML;
             end
             
+            
             % =============================================================
             % Step 4: SCI-based Equivalent Unscaled Prior Fusion 
             % (隐式局部SCI：保护IMU状态不被惩罚)
@@ -155,7 +168,7 @@ classdef DMLKF < EKF_filter
             
             if valid_rel_count > 0
                 % 【核心理论参数】：显式定义先验的权重(代表基站置信度)
-                w_prior = 0.93; 
+                w_prior = 0.50; 
                 
                 % 防御：严格保证在 (0, 1) 区间内，否则接下来会除 0 报 NaN
                 w_prior = max(min(w_prior, 0.999), 0.001); 
@@ -194,8 +207,6 @@ classdef DMLKF < EKF_filter
             % 强制对称，保障数值计算极度稳定
             Omega_fused = (Omega_fused + Omega_fused') / 2;
             
-            % 【防御性】：检测矩阵的条件数，如果网络太差使得信息矩阵接近奇异，
-            % 加上微弱的吉洪诺夫正则化（对角线微小偏移）强制其可逆。
             if cond(Omega_fused) > 1e10
                 Omega_fused = Omega_fused + eye(8) * 1e-8;
             end
@@ -206,8 +217,6 @@ classdef DMLKF < EKF_filter
             
             delta_x_post = P_post * eta_fused;
             
-            % 【终极防御兜底 Fallback】：
-            % 万一上面哪个地方浮点数爆炸了算出了 NaN，立刻退回到安全的 Anchor 结果
             if any(isnan(delta_x_post)) || any(isinf(delta_x_post))
                 warning('DMLKF: NaN detected in delta_x_post! Fallback to Anchor-only update.');
                 delta_x_post = delta_x_anc;
